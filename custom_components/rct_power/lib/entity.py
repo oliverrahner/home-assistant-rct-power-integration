@@ -212,7 +212,13 @@ class RctPowerFaultSensorEntity(RctPowerSensorEntity):
 
 
 @dataclass
-class RctPowerEntityDescription(EntityDescription):
+class RctPowerBinarySensorEntityDescription(
+    BinarySensorEntityDescription
+):
+    get_native_binary_value: Callable[
+        [RctPowerBinarySensorEntity, list[Optional[ApiResponseValue]]], StateType
+    ] = get_first_api_response_value_as_binary_state
+    
     icon: Optional[str] = ICON
     object_infos: List[ObjectInfo] = field(init=False)
     object_names: List[str] = field(default_factory=list)
@@ -228,23 +234,28 @@ class RctPowerEntityDescription(EntityDescription):
             REGISTRY.get_by_name(object_name) for object_name in self.object_names
         ]
 
-
-@dataclass
-class RctPowerBinarySensorEntityDescription(
-    RctPowerEntityDescription, BinarySensorEntityDescription
-):
-    get_native_binary_value: Callable[
-        [RctPowerBinarySensorEntity, list[Optional[ApiResponseValue]]], StateType
-    ] = get_first_api_response_value_as_binary_state
-
-
 @dataclass
 class RctPowerSensorEntityDescription(
-    RctPowerEntityDescription, SensorEntityDescription
+    SensorEntityDescription
 ):
     get_native_value: Callable[
         [RctPowerSensorEntity, list[Optional[ApiResponseValue]]], StateType
     ] = get_first_api_response_value_as_state
+    
+    icon: Optional[str] = ICON
+    object_infos: List[ObjectInfo] = field(init=False)
+    object_names: List[str] = field(default_factory=list)
+    # to allow for stable enitity identities even if the object ids change
+    unique_id: Optional[str] = None
+    update_priority: EntityUpdatePriority = EntityUpdatePriority.FREQUENT
+    get_device_info: Callable[[RctPowerEntity], Optional[DeviceInfo]] = lambda e: None
+
+    def __post_init__(self):
+        if not self.object_names:
+            self.object_names = [self.key]
+        self.object_infos = [
+            REGISTRY.get_by_name(object_name) for object_name in self.object_names
+        ]
 
 
 def slugify_entity_name(name: str):
