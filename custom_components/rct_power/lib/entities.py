@@ -1,21 +1,19 @@
 import re
 from typing import List
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import SensorStateClass
 from rctclient.registry import REGISTRY
 
-from .device_info_helpers import get_battery_device_info, get_inverter_device_info
-from .entity import (
-    EntityUpdatePriority,
-    RctPowerSensorEntityDescription,
-    RctPowerBinarySensorEntityDescription,
-)
-from .state_helpers import (
-    get_first_api_reponse_value_as_absolute_state,
-    sum_api_response_values_as_state,
-    get_battery_calibration_status,
-    get_battery_balancing_status,
-)
+from .device_info_helpers import get_battery_device_info
+from .device_info_helpers import get_inverter_device_info
+from .entity import EntityUpdatePriority
+from .entity import RctPowerBitfieldSensorEntityDescription
+from .entity import RctPowerSensorEntityDescription
+from .state_helpers import available_battery_status
+from .state_helpers import get_first_api_reponse_value_as_absolute_state
+from .state_helpers import get_first_api_response_value_as_battery_status
+from .state_helpers import sum_api_response_values_as_state
 
 
 def get_matching_names(expression: str):
@@ -197,31 +195,6 @@ battery_sensor_entity_descriptions: List[RctPowerSensorEntityDescription] = [
     ),
 ]
 
-battery_binary_sensor_entity_descriptions: List[
-    RctPowerBinarySensorEntityDescription
-] = [
-    RctPowerBinarySensorEntityDescription(
-        get_device_info=get_battery_device_info,
-        key="battery.bat_status.calibrating",
-        object_names=["battery.bat_status"],
-        name="Battery Calibration Active",
-        update_priority=EntityUpdatePriority.FREQUENT,
-        get_native_binary_value=get_battery_calibration_status,
-    ),
-    RctPowerBinarySensorEntityDescription(
-        get_device_info=get_battery_device_info,
-        key="battery.bat_status.balancing",
-        # 'battery.status2' is not required here, this is just a hack
-        # so that this entity's generated id doesn't conflict with
-        # "battery.bat_status.calibrating"
-        # changing the id generation scheme would break existing installations
-        object_names=["battery.bat_status", "battery.status2"],
-        name="Battery Balancing Active",
-        update_priority=EntityUpdatePriority.FREQUENT,
-        get_native_binary_value=get_battery_balancing_status,
-    ),
-]
-
 inverter_sensor_entity_descriptions: List[RctPowerSensorEntityDescription] = [
     RctPowerSensorEntityDescription(
         get_device_info=get_inverter_device_info,
@@ -250,11 +223,13 @@ inverter_sensor_entity_descriptions: List[RctPowerSensorEntityDescription] = [
     RctPowerSensorEntityDescription(
         get_device_info=get_inverter_device_info,
         key="db.core_temp",
+        name="Core Temperature",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     RctPowerSensorEntityDescription(
         get_device_info=get_inverter_device_info,
         key="db.temp1",
+        name="Heat Sink Temperature",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     RctPowerSensorEntityDescription(
@@ -727,8 +702,8 @@ inverter_sensor_entity_descriptions: List[RctPowerSensorEntityDescription] = [
     ),
 ]
 
-fault_sensor_entity_descriptions: List[RctPowerSensorEntityDescription] = [
-    RctPowerSensorEntityDescription(
+bitfield_sensor_entity_descriptions: List[RctPowerBitfieldSensorEntityDescription] = [
+    RctPowerBitfieldSensorEntityDescription(
         get_device_info=get_inverter_device_info,
         key="fault.flt",
         object_names=[
@@ -738,19 +713,25 @@ fault_sensor_entity_descriptions: List[RctPowerSensorEntityDescription] = [
             "fault[3].flt",
         ],
         name="Faults",
+        update_priority=EntityUpdatePriority.FREQUENT,
         unique_id=f"{0x37F9D5CA}",  # for backwards-compatibility
+    ),
+    RctPowerBitfieldSensorEntityDescription(
+        get_device_info=get_battery_device_info,
+        key="battery.bat_status",
+        name="Battery Status",
+        update_priority=EntityUpdatePriority.FREQUENT,
+        get_native_value=get_first_api_response_value_as_battery_status,
+        options=available_battery_status,
     ),
 ]
 
 sensor_entity_descriptions = [
     *battery_sensor_entity_descriptions,
     *inverter_sensor_entity_descriptions,
-    *fault_sensor_entity_descriptions,
+    *bitfield_sensor_entity_descriptions,
 ]
-
-binary_sensor_entity_descriptions = [*battery_binary_sensor_entity_descriptions]
 
 all_entity_descriptions = [
     *sensor_entity_descriptions,
-    *binary_sensor_entity_descriptions,
 ]

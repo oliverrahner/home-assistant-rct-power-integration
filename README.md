@@ -129,6 +129,7 @@ depending on your preference.
 | Battery State of Health        | %    | the estimated state of health of the battery                                  |
 | Battery Stored Energy          | Wh   | the cumulative energy fed into the battery                                    |
 | Battery Used Energy            | Wh   | the cumulative energy consumed from the battery                               |
+| Battery Status                 |      | the current battery status (incomplete)                                       |
 
 ### Household consumers and producers
 
@@ -188,7 +189,7 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [commits-shield]: https://img.shields.io/github/commit-activity/y/weltenwort/home-assistant-rct-power-integration.svg?style=for-the-badge
 [commits]: https://github.com/weltenwort/home-assistant-rct-power-integration/commits/main
 [hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
+[hacsbadge]: https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge
 [discord]: https://discord.gg/Qa5fW2R
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
 [exampleimg]: example.png
